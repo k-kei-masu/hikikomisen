@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>電線許容電流判定システム</title>
+<style>
+  /* ------------ 全体レイアウト・レスポンシブ対応 ------------ */
+  body {
+    font-family: sans-serif;
+    margin: 0; padding: 0;
+    background: #f5f5f5;
+  }
+  header {
+    background: #333;
+    color: #fff;
+    padding: 0.5em;
+    text-align: center;
+  }
+  main {
+    padding: 1em;
+    max-width: 600px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 8px;
+  }
+
+  h1 {
+    font-size: 1.2em;
+    margin: 0.4em 0;
+  }
+  label {
+    display: inline-block;
+    margin-right: 0.5em;
+  }
+  select, input[type="number"], input[type="range"] {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 1em;
+    padding: 0.4em;
+    font-size: 1em;
+  }
+  .hidden {
+    display: none;
+  }
+  .btn {
+    display: inline-block;
+    background: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    cursor: pointer;
+  }
+  .btn:hover {
+    background: #0056b3;
+  }
+  .result {
+    margin-top: 1em;
+    padding: 1em;
+    background: #eef;
+    border-radius: 4px;
+  }
+  hr {
+    margin: 1.5em 0;
+  }
+  footer {
+    text-align: center;
+    font-size: 0.8em;
+    color: #666;
+    margin: 1em 0;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>電線許容電流 判定システム</h1>
+</header>
+
+<main>
+
+  <!-- 相線の選択 -->
+  <label for="phase">相線を選択：</label>
+  <select id="phase">
+    <option value="単三">単三</option>
+    <option value="三相">三相</option>
+  </select>
+
+  <!-- 深夜負荷の配線状態 (単三のみ) -->
+  <div id="night-load-section">
+    <label for="nightLoad">深夜負荷配線状態：</label>
+    <select id="nightLoad">
+      <option value="なし">なし</option>
+      <option value="一次側">一次側</option>
+      <option value="二次側">二次側</option>
+    </select>
+  </div>
+
+  <!-- 契約形態 (単三のみ) -->
+  <div id="contract-section">
+    <label for="contractType">契約形態：</label>
+    <select id="contractType">
+      <option value="ACL">ACL</option>
+      <option value="主開閉器">主開閉器</option>
+    </select>
+  </div>
+
+  <hr>
+
+  <!-- ACL電流値（単三 & ACL時だけ表示）-->
+  <div id="acl-section" class="hidden">
+    <label for="aclValue">ACL電流値[A]：</label>
+    <select id="aclValue">
+      <option value="10">10A</option>
+      <option value="15">15A</option>
+      <option value="20">20A</option>
+      <option value="30">30A</option>
+      <option value="40">40A</option>
+      <option value="50">50A</option>
+      <option value="60">60A</option>
+    </select>
+  </div>
+
+  <!-- 主開閉器容量（単三 & 主開閉器時だけ表示） -->
+  <div id="mainCB-section" class="hidden">
+    <label for="mainCB">主開閉器容量[kVA]：</label>
+    <input id="mainCB" type="number" step="0.1" min="0" placeholder="例：5.0">
+  </div>
+
+  <!-- 深夜負荷容量（単三 & 深夜負荷一次側時に入力必要）-->
+  <div id="nightLoadCap-section" class="hidden">
+    <label for="nightLoadCap">深夜負荷容量[kVA]：</label>
+    <input id="nightLoadCap" type="number" step="0.1" min="0" placeholder="例：2.0">
+  </div>
+
+  <!-- 三相時: 負荷容量 & 力率入力 -->
+  <div id="three-phase-section" class="hidden">
+    <label for="threePhaseKW">負荷容量[kW]：</label>
+    <input id="threePhaseKW" type="number" step="0.1" min="0" placeholder="例：10.0">
+
+    <label>力率[%]：<span id="pf-label">85</span>%</label>
+    <input id="powerFactor" type="range" min="0" max="100" step="1" value="85">
+  </div>
+
+  <hr>
+
+  <!-- 亘長 -->
+  <label for="length">電線の亘長[m]：</label>
+  <input id="length" type="number" step="1" min="1" max="60" placeholder="1 ～ 60の範囲" />
+
+  <button class="btn" id="calcBtn">判定</button>
+
+  <!-- 結果表示 -->
+  <div class="result" id="resultArea" style="display: none;">
+    <p id="calcResult"></p>
+  </div>
+
+</main>
+
+<footer>
+  <p>© 2023 電線許容電流 判定システム</p>
+</footer>
+
+<script>
+/* ------------------------------------------------------------
+   1. 電線許容電流データ (サイズ別, 1m～60m)
+   ※キー = 電線サイズ(文字列), 値 = [1m, 2m, 3m, ..., 60m] (要素数60)
+   ------------------------------------------------------------ */
+const wireData = {
+  "2.6": [
+    34,34,34,34,34,34,34,34,34,34,34,34,33,30,28,26,25,23,22,22,20,19,18,17,17,16,15,15,14,14,13,13,13,12,12,11,11,11,11,11,10,10,10,9,9,9,9,9,9,9,8,8,8,7,7,7,7,7,7,7
+  ],
+  "3.2": [
+    44,44,44,44,44,44,44,44,44,44,44,44,44,44,43,40,38,36,34,33,31,29,28,27,26,25,24,23,22,22,21,20,19,19,18,18,17,17,16,16,15,15,15,14,14,14,13,13,13,13,12,12,12,12,11,11,11,11,11,10
+  ],
+  "14": [
+    62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,61,58,55,52,50,47,45,44,42,40,39,38,37,35,34,33,32,31,30,29,29,28,28,26,26,25,25,24,23,23,22,22,22,21,21,20,20,20,19,19,19,18,18
+  ],
+  "22": [
+    80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,78,75,72,69,66,64,62,60,58,56,54,53,51,50,48,47,46,45,43,42,41,40,40,39,38,37,36,36,35,34,34,33,32,32,31,31,30,30
+  ],
+  "38": [
+    113,113,113,113,113,113,113,113,113,113,113,113,113,113,113,113,113,112,108,105,102,98,95,92,89,87,84,82,80,78,76,74,72,70,69,67,66,64,63,62,61,59,58,57,56,55,54,53,52,51,50,50,50,50,50,50,50,50,50,50
+  ],
+  "60": [
+    152,152,152,152,152,152,152,152,152,152,152,152,152,152,152,152,152,152,152,152,152,152,152,152,152,152,152,152,152,152,152,152,148,144,140,136,132,128,125,123,119,116,113,111,108,106,104,102,100,98,96,94,92,90,89,87,85,84,83,81
+  ],
+  "100": [
+    209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,209,206,201,196,191,187,183,179,175,171,168,165,161,158,155,152,149,147,144,142,139,137
+  ]
+};
+
+/* ------------------------------------------------------------
+   2. イベント設定
+   ------------------------------------------------------------ */
+const phase      = document.getElementById("phase");
+const nightLoad  = document.getElementById("nightLoad");
+const contract   = document.getElementById("contractType");
+const aclSection = document.getElementById("acl-section");
+const mainCBSection = document.getElementById("mainCB-section");
+const nightLoadCapSection = document.getElementById("nightLoadCap-section");
+const threePhaseSection  = document.getElementById("three-phase-section");
+
+const aclValue     = document.getElementById("aclValue");
+const mainCB       = document.getElementById("mainCB");
+const nightLoadCap = document.getElementById("nightLoadCap");
+const threePhaseKW = document.getElementById("threePhaseKW");
+const powerFactor  = document.getElementById("powerFactor");
+const pfLabel      = document.getElementById("pf-label");
+
+const lengthInput  = document.getElementById("length");
+const calcBtn      = document.getElementById("calcBtn");
+const resultArea   = document.getElementById("resultArea");
+const calcResult   = document.getElementById("calcResult");
+
+// 力率のスライダー変更時に表示を更新
+powerFactor.addEventListener("input", () => {
+  pfLabel.textContent = powerFactor.value;
+});
+
+// 相線や契約形態の変更時に、表示フォームを動的に切り替え
+function updateFormVisibility() {
+  // 三相の場合は、単三用のUIを非表示
+  if (phase.value === "三相") {
+    document.getElementById("night-load-section").classList.add("hidden");
+    document.getElementById("contract-section").classList.add("hidden");
+
+    aclSection.classList.add("hidden");
+    mainCBSection.classList.add("hidden");
+    nightLoadCapSection.classList.add("hidden");
+
+    threePhaseSection.classList.remove("hidden");
+  } else {
+    // 単三の場合
+    document.getElementById("night-load-section").classList.remove("hidden");
+    document.getElementById("contract-section").classList.remove("hidden");
+
+    threePhaseSection.classList.add("hidden");
+
+    // ACL or 主開閉器 の場合で更に分岐
+    if (contract.value === "ACL") {
+      aclSection.classList.remove("hidden");
+      mainCBSection.classList.add("hidden");
+    } else {
+      aclSection.classList.add("hidden");
+      mainCBSection.classList.remove("hidden");
+    }
+
+    // 深夜負荷配線状態
+    // 一次側の場合は 深夜負荷容量 入力が必要
+    // なし・二次側の場合は 不要
+    if (nightLoad.value === "一次側") {
+      nightLoadCapSection.classList.remove("hidden");
+    } else {
+      nightLoadCapSection.classList.add("hidden");
+    }
+  }
+}
+phase.addEventListener("change", updateFormVisibility);
+contract.addEventListener("change", updateFormVisibility);
+nightLoad.addEventListener("change", updateFormVisibility);
+
+// 初期状態を反映
+updateFormVisibility();
+
+/* ------------------------------------------------------------
+   3. 電流値の計算ロジック (公式 A～E)
+   ------------------------------------------------------------ */
+function calculateCurrent() {
+  let current = 0;
+
+  if (phase.value === "三相") {
+    // 公式E
+    // 電流[A] = (負荷容量[kW] * 1000) / (1.73 * 200 * (力率[%]*0.01))
+    const kw  = parseFloat(threePhaseKW.value) || 0;
+    const pf  = parseFloat(powerFactor.value) * 0.01;
+    current = (kw * 1000) / (1.73 * 200 * pf);
+  } else {
+    // 単三
+    const nl = nightLoad.value;      // 深夜負荷配線状態
+    const ct = contract.value;       // 契約形態
+    const acl = parseFloat(aclValue.value) || 0;
+    const mCB = parseFloat(mainCB.value) || 0;
+    const nlCap = parseFloat(nightLoadCap.value) || 0;
+
+    if (nl === "なし" || nl === "二次側") {
+      if (ct === "ACL") {
+        // 公式A: current = ACL電流値 * 0.6
+        current = acl * 0.6;
+      } else {
+        // 公式B: current = 主開閉器容量[kVA] * 5
+        current = mCB * 5;
+      }
+    } else {
+      // 深夜負荷が 一次側
+      if (ct === "ACL") {
+        // 公式C: current = (ACL電流値*0.6) + (深夜負荷容量[kVA]*5)
+        current = (acl * 0.6) + (nlCap * 5);
+      } else {
+        // 公式D: current = (主開閉器容量[kVA]*5) + (深夜負荷容量[kVA]*5)
+        current = (mCB * 5) + (nlCap * 5);
+      }
+    }
+  }
+
+  return current;
+}
+
+/* ------------------------------------------------------------
+   4. 判定処理
+   ------------------------------------------------------------ */
+function findSuitableWire(requiredA, lengthM) {
+  // lengthM は1～60の想定
+  if (lengthM < 1 || lengthM > 60) return null;
+
+  // wireDataの各サイズを小さい順に見て、許容電流が requiredA 以上を満たす
+  // 最小サイズを返却
+  const sizes = Object.keys(wireData).map(Number).sort((a, b) => a - b);
+
+  for (let i=0; i<sizes.length; i++) {
+    let sizeKey = sizes[i].toString();
+    let allowableA = wireData[sizeKey][lengthM - 1]; // 配列は0-index, lengthMは1-index
+    if (allowableA >= requiredA) {
+      return sizeKey;
+    }
+  }
+  return null; // 見つからない場合
+}
+
+/* ------------------------------------------------------------
+   5. 「判定ボタン」クリック時
+   ------------------------------------------------------------ */
+calcBtn.addEventListener("click", () => {
+  const requiredA = calculateCurrent();
+  const dist = parseInt(lengthInput.value, 10);
+
+  // 入力チェック
+  if (!dist || dist < 1 || dist > 60) {
+    alert("亘長(1～60m)を正しく入力してください。");
+    return;
+  }
+
+  // 必要電流に対して適合する最小サイズを検索
+  const wireSize = findSuitableWire(requiredA, dist);
+
+  // 結果表示
+  let msg = `計算された電流値: <strong>${requiredA.toFixed(1)}A</strong><br>`;
+  if (wireSize) {
+    msg += `亘長 ${dist}m の場合、<strong>${wireSize}sq</strong> 電線が最小で条件を満たします。`;
+  } else {
+    msg += `<span style="color:red;">条件を満たす電線が見つかりませんでした。</span>`;
+  }
+  calcResult.innerHTML = msg;
+  resultArea.style.display = "block";
+});
+</script>
+
+</body>
+</html>
