@@ -155,15 +155,17 @@
     <label for="threePhaseKW">負荷容量[kW]：</label>
     <input id="threePhaseKW" type="number" step="0.1" min="0" placeholder="例：10.0">
 
-    <!-- スライダーの値を即時表示するため pfDisplay を用意 -->
+    <!-- スライダーの値を表示するためのラベルに修正 -->
     <label for="powerFactor">
-      力率[%] <span id="pfDisplay" style="margin-left:10px;font-weight:bold;">85</span>%
+      力率[%] 
+      <span id="pfDisplay" style="margin-left:10px;font-weight:bold;">85</span>%
       <br>
       <span style="font-size:0.8em;color:#666;">
         不明な場合は85%で算定
       </span>
     </label>
-    <input id="powerFactor" type="range" min="0" max="100" step="1" value="85">
+    <!-- minを60、maxを100に変更 -->
+    <input id="powerFactor" type="range" min="60" max="100" step="1" value="85">
   </div>
   <!-- ▲▲▲ 三相 用 UI 終了 ▲▲▲ -->
 
@@ -223,9 +225,9 @@
    A. 許容電流データ (三相/単三, 単二100V)
    ============================================================ */
 
-// 既存wireDataなどは省略せず掲載
+// 既存 wireData や table2w100V は省略せず掲載（実際には前回と同じ）
 const wireData = {
-  "2.6": [ /* 1～60m: 許容電流の配列 */ 
+  "2.6": [
     34,34,34,34,34,34,34,34,34,34,34,34,33,30,28,26,25,23,22,22,20,19,18,17,17,16,15,15,14,14,13,13,13,12,12,11,11,11,11,11,10,10,10,9,9,9,9,9,9,9,8,8,8,7,7,7,7,7,7,7
   ],
   "3.2": [
@@ -248,23 +250,47 @@ const wireData = {
   ]
 };
 
-// 単二100V テーブル
 const table2w100V = [
-  /* 略：前回同様のデータを貼り付け */
   // 1径間以内 / 30M以下
   { wireSize: "2.0mm", lineSpan: "1径間以内", currentLimit: 20, lengthRange: "30M以下" },
   { wireSize: "2.6mm", lineSpan: "1径間以内", currentLimit: 30, lengthRange: "30M以下" },
   { wireSize: "3.2mm", lineSpan: "1径間以内", currentLimit: 50, lengthRange: "30M以下" },
-  /* ... 以下省略、同じ内容を続ける ... */
+  { wireSize: "14SQ",  lineSpan: "1径間以内", currentLimit: 75, lengthRange: "30M以下" },
+  { wireSize: "22SQ",  lineSpan: "1径間以内", currentLimit:120, lengthRange: "30M以下" },
+  { wireSize: "38SQ",  lineSpan: "1径間以内", currentLimit:220, lengthRange: "30M以下" },
+  // 1径間以内 / 30M超過
+  { wireSize: "2.6mm", lineSpan: "1径間以内", currentLimit: 20, lengthRange: "30M超過" },
+  { wireSize: "3.2mm", lineSpan: "1径間以内", currentLimit: 30, lengthRange: "30M超過" },
+  { wireSize: "14SQ",  lineSpan: "1径間以内", currentLimit: 50, lengthRange: "30M超過" },
+  { wireSize: "22SQ",  lineSpan: "1径間以内", currentLimit: 80, lengthRange: "30M超過" },
+  { wireSize: "38SQ",  lineSpan: "1径間以内", currentLimit:150, lengthRange: "30M超過" },
+  // 1径間超過 / 15M以下
+  { wireSize: "2.0mm", lineSpan: "1径間超過", currentLimit: 20, lengthRange: "15M以下" },
+  { wireSize: "2.6mm", lineSpan: "1径間超過", currentLimit: 30, lengthRange: "15M以下" },
+  { wireSize: "3.2mm", lineSpan: "1径間超過", currentLimit: 50, lengthRange: "15M以下" },
+  { wireSize: "14SQ",  lineSpan: "1径間超過", currentLimit: 75, lengthRange: "15M以下" },
+  { wireSize: "22SQ",  lineSpan: "1径間超過", currentLimit: 80, lengthRange: "15M以下" },
+  { wireSize: "38SQ",  lineSpan: "1径間超過", currentLimit:150, lengthRange: "15M以下" },
+  // 1径間超過 / 15M超過30M以下
+  { wireSize: "2.0mm", lineSpan: "1径間超過", currentLimit: 10, lengthRange: "15M超過30M以下" },
+  { wireSize: "2.6mm", lineSpan: "1径間超過", currentLimit: 20, lengthRange: "15M超過30M以下" },
+  { wireSize: "3.2mm", lineSpan: "1径間超過", currentLimit: 30, lengthRange: "15M超過30M以下" },
+  { wireSize: "14SQ",  lineSpan: "1径間超過", currentLimit: 50, lengthRange: "15M超過30M以下" },
+  { wireSize: "22SQ",  lineSpan: "1径間超過", currentLimit: 80, lengthRange: "15M超過30M以下" },
+  { wireSize: "38SQ",  lineSpan: "1径間超過", currentLimit:150, lengthRange: "15M超過30M以下" },
+  // 1径間超過 / 30M超過
+  { wireSize: "2.6mm", lineSpan: "1径間超過", currentLimit: 10, lengthRange: "30M超過" },
+  { wireSize: "3.2mm", lineSpan: "1径間超過", currentLimit: 20, lengthRange: "30M超過" },
+  { wireSize: "14SQ",  lineSpan: "1径間超過", currentLimit: 30, lengthRange: "30M超過" },
+  { wireSize: "22SQ",  lineSpan: "1径間超過", currentLimit: 50, lengthRange: "30M超過" },
+  { wireSize: "38SQ",  lineSpan: "1径間超過", currentLimit: 90, lengthRange: "30M超過" }
 ];
 
 /* ============================================================
    B. 各種DOM参照
    ============================================================ */
-// ▼ 相線
 const phase                = document.getElementById("phase");
-
-// ▼ 単三関連
+// 単三
 const singleThreeWireSec   = document.getElementById("single-three-wire-section");
 const nightLoad            = document.getElementById("nightLoad");
 const contractType         = document.getElementById("contractType");
@@ -274,42 +300,38 @@ const mainCBSection        = document.getElementById("mainCB-section");
 const mainCB               = document.getElementById("mainCB");
 const nightLoadCapSection  = document.getElementById("nightLoadCap-section");
 const nightLoadCap         = document.getElementById("nightLoadCap");
-
-// ▼ 三相関連
+// 三相
 const threePhaseSection    = document.getElementById("three-phase-section");
 const threePhaseKW         = document.getElementById("threePhaseKW");
 const powerFactor          = document.getElementById("powerFactor");
-const pfDisplay            = document.getElementById("pfDisplay");  // 追加
-
-// ▼ 単二100V関連
+const pfDisplay            = document.getElementById("pfDisplay");  // スライダー値表示用
+// 単二100V
 const twoWireSec           = document.getElementById("two-wire-100v-section");
 const twoWireCurrSelect    = document.getElementById("twoWireCurrSelect");
 const twoWireCurrInput     = document.getElementById("twoWireCurrInput");
 const trafoDirectCheckbox  = document.getElementById("trafoDirect");
 const lineSpanSelect       = document.getElementById("lineSpanSelect");
 const lengthRangeSelect    = document.getElementById("lengthRangeSelect");
-
-// ▼ 既存 亘長 (単三/三相のみ使用)
+// 亘長(単三/三相)
 const wireLengthSection    = document.getElementById("wireLength-section");
 const lengthInput          = document.getElementById("length");
-
-// ▼ ボタン/結果表示
+// ボタン/結果
 const calcBtn      = document.getElementById("calcBtn");
 const resetBtn     = document.getElementById("resetBtn");
 const resultArea   = document.getElementById("resultArea");
 
 /* ============================================================
-   C. イベント・フォーム表示制御
+   C. イベント: UI切り替え
    ============================================================ */
 
-// 力率スライダーを動かすたびにテキストを更新
+// 力率スライダー操作時に即時表示
 powerFactor.addEventListener("input", () => {
   pfDisplay.textContent = powerFactor.value;
 });
 
-// 相線/深夜負荷/契約形態変更でUI切り替え
+// 相線などに応じてフォーム切り替え
 function updateFormVisibility() {
-  // 初期：全部隠す
+  // 一旦全部隠す
   singleThreeWireSec.classList.add("hidden");
   threePhaseSection.classList.add("hidden");
   twoWireSec.classList.add("hidden");
@@ -320,7 +342,6 @@ function updateFormVisibility() {
     singleThreeWireSec.classList.remove("hidden");
     wireLengthSection.classList.remove("hidden");
 
-    // ACL/主開閉器
     if (contractType.value === "ACL") {
       aclSection.classList.remove("hidden");
       mainCBSection.classList.add("hidden");
@@ -328,7 +349,6 @@ function updateFormVisibility() {
       aclSection.classList.add("hidden");
       mainCBSection.classList.remove("hidden");
     }
-
     // 深夜負荷
     if (nightLoad.value === "一次側") {
       nightLoadCapSection.classList.remove("hidden");
@@ -350,7 +370,10 @@ phase.addEventListener("change", updateFormVisibility);
 nightLoad.addEventListener("change", updateFormVisibility);
 contractType.addEventListener("change", updateFormVisibility);
 
-// 単二100V：線径間数 切り替え
+/**
+ * @function updateLengthRangeOptions
+ * @description 単二100V: 線径間数変更時に引込線亘長区分を切り替え
+ */
 function updateLengthRangeOptions() {
   if (lineSpanSelect.value === "1径間以内") {
     lengthRangeSelect.innerHTML = `
@@ -367,7 +390,10 @@ function updateLengthRangeOptions() {
 }
 lineSpanSelect.addEventListener("change", updateLengthRangeOptions);
 
-// 変圧器直下
+/**
+ * @function handleTrafoDirectChecked
+ * @description "変圧器直下"チェック時、線径間数=1径間以内, 亘長区分=30M以下に固定
+ */
 function handleTrafoDirectChecked() {
   if (trafoDirectCheckbox.checked) {
     lineSpanSelect.value = "1径間以内";
@@ -394,7 +420,7 @@ function calcCurrentFor3phaseOrSingle() {
 
   if (phase.value === "三相") {
     const kw = parseFloat(threePhaseKW.value) || 0;
-    const pf = parseFloat(powerFactor.value) / 100;
+    const pf = parseFloat(powerFactor.value) / 100; // 0.6～1.0
     if (pf === 0) return 0;
 
     // 公式E
@@ -473,7 +499,7 @@ function findWireForTwoWire100V(requestedA, lineSpan, lenRange) {
 }
 
 /* ============================================================
-   G. 判定ボタン
+   G. 判定ボタン：クリック
    ============================================================ */
 calcBtn.addEventListener("click", () => {
   let msg = "";
@@ -497,6 +523,12 @@ calcBtn.addEventListener("click", () => {
       msg += `亘長：${dist}m\n`;
     }
 
+    // 結果表示
+    resultArea.textContent = msg;
+    resultArea.style.display = "block";
+    // ページ下部へスクロール
+    resultArea.scrollIntoView({ behavior: "smooth" });
+
   } else {
     // 単二100V
     const selVal  = parseFloat(twoWireCurrSelect.value) || 0;
@@ -514,26 +546,33 @@ calcBtn.addEventListener("click", () => {
       msg += `電流値：${requestedA}A\n`;
       msg += `線径間数：${lineSpan}, 亘長区分：${lenRange}\n`;
     }
-  }
 
-  resultArea.textContent = msg;
-  resultArea.style.display = "block";
+    // 結果表示
+    resultArea.textContent = msg;
+    resultArea.style.display = "block";
+    // ページ下部へスクロール
+    resultArea.scrollIntoView({ behavior: "smooth" });
+  }
 });
 
 /* ============================================================
    H. リセットボタン
    ============================================================ */
 function resetAll() {
+  // 相線関連
   phase.value = "単三";
   nightLoad.value = "なし";
   contractType.value = "主開閉器";
   aclValue.value = "10";
   mainCB.value = "";
   nightLoadCap.value = "";
-  threePhaseKW.value = "";
-  powerFactor.value = "85";
-  pfDisplay.textContent = "85"; // ← スライダーの初期値表示も戻す
 
+  // 三相
+  threePhaseKW.value = "";
+  powerFactor.value = "85";    // スライダー初期値
+  pfDisplay.textContent = "85"; // 表示も85に
+
+  // 単二100V
   twoWireCurrSelect.value = "30";
   twoWireCurrInput.value = "";
   trafoDirectCheckbox.checked = false;
@@ -543,11 +582,14 @@ function resetAll() {
   updateLengthRangeOptions();
   lengthRangeSelect.value = "30M以下";
 
+  // 亘長(単三/三相用)
   lengthInput.value = "";
 
+  // 結果非表示
   resultArea.style.display = "none";
   resultArea.textContent = "";
 
+  // フォーム更新
   updateFormVisibility();
 }
 resetBtn.addEventListener("click", resetAll);
