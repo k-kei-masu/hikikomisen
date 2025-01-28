@@ -180,8 +180,12 @@
     <label for="twoWireCurrInput">電流値(A) - 自由入力：</label>
     <input id="twoWireCurrInput" type="number" step="1" min="0" placeholder="自由入力">
 
+    <!-- 変圧器直下 チェックボックス -->
+    <input type="checkbox" id="trafoDirect">
+    <label for="trafoDirect">変圧器直下</label>
+
     <!-- 2. 線径間数 -->
-    <label for="lineSpanSelect">変圧器から引込柱までの低圧線径間数：</label>
+    <label for="lineSpanSelect">変圧器から引込柱の低圧線径間数：</label>
     <select id="lineSpanSelect">
       <option value="1径間以内" selected>1径間以内</option>
       <option value="1径間超過">1径間超過</option>
@@ -190,7 +194,6 @@
     <!-- 3. 引込線亘長区分 -->
     <label for="lengthRangeSelect">引込線亘長：</label>
     <select id="lengthRangeSelect">
-      <!-- 初期：1径間以内→[30M以下, 30M超過] -->
       <option value="30M以下">30M以下</option>
       <option value="30M超過">30M超過</option>
     </select>
@@ -285,6 +288,7 @@ const table2w100V = [
    C. 各種DOM参照
    ------------------------------------------------------------ */
 const phase                = document.getElementById("phase");
+/* 単三 */
 const singleThreeWireSec   = document.getElementById("single-three-wire-section");
 const nightLoad            = document.getElementById("nightLoad");
 const contractType         = document.getElementById("contractType");
@@ -294,20 +298,21 @@ const mainCBSection        = document.getElementById("mainCB-section");
 const mainCB               = document.getElementById("mainCB");
 const nightLoadCapSection  = document.getElementById("nightLoadCap-section");
 const nightLoadCap         = document.getElementById("nightLoadCap");
-
+/* 三相 */
 const threePhaseSection    = document.getElementById("three-phase-section");
 const threePhaseKW         = document.getElementById("threePhaseKW");
 const powerFactor          = document.getElementById("powerFactor");
-
+/* 単二100V */
 const twoWireSec           = document.getElementById("two-wire-100v-section");
 const twoWireCurrSelect    = document.getElementById("twoWireCurrSelect");
 const twoWireCurrInput     = document.getElementById("twoWireCurrInput");
+const trafoDirectCheckbox  = document.getElementById("trafoDirect");
 const lineSpanSelect       = document.getElementById("lineSpanSelect");
 const lengthRangeSelect    = document.getElementById("lengthRangeSelect");
-
+/* 既存 亘長入力 */
 const wireLengthSection    = document.getElementById("wireLength-section");
 const lengthInput          = document.getElementById("length");
-
+/* ボタン/結果 */
 const calcBtn      = document.getElementById("calcBtn");
 const resetBtn     = document.getElementById("resetBtn");
 const resultArea   = document.getElementById("resultArea");
@@ -357,8 +362,8 @@ phase.addEventListener("change", updateFormVisibility);
 nightLoad.addEventListener("change", updateFormVisibility);
 contractType.addEventListener("change", updateFormVisibility);
 
-// 単二100V: 線径間数が変化したら、亘長区分を更新
-lineSpanSelect.addEventListener("change", () => {
+/* 単二100V: 線径間数が変化したら、亘長区分を更新 */
+function updateLengthRangeOptions() {
   if (lineSpanSelect.value === "1径間以内") {
     lengthRangeSelect.innerHTML = `
       <option value="30M以下">30M以下</option>
@@ -370,6 +375,23 @@ lineSpanSelect.addEventListener("change", () => {
       <option value="15M超過30M以下">15M超過30M以下</option>
       <option value="30M超過">30M超過</option>
     `;
+  }
+}
+lineSpanSelect.addEventListener("change", updateLengthRangeOptions);
+
+/* 変圧器直下 チェック → 1径間以内/30M以下固定 */
+trafoDirectCheckbox.addEventListener("change", () => {
+  if (trafoDirectCheckbox.checked) {
+    // 固定
+    lineSpanSelect.value = "1径間以内";
+    lengthRangeSelect.value = "30M以下";
+    lineSpanSelect.disabled = true;
+    lengthRangeSelect.disabled = true;
+  } else {
+    // 解除
+    lineSpanSelect.disabled = false;
+    lengthRangeSelect.disabled = false;
+    updateLengthRangeOptions(); // 初期化(再度選択肢生成)
   }
 });
 
@@ -461,7 +483,7 @@ function findWireForTwoWire100V(requestedA, lineSpan, lenRange) {
       // もし "2.0mm" なら "2.0(2.6mm)" と表示したい
       if (row.wireSize === "2.0mm") {
         return "2.0(2.6mm)";
-      } 
+      }
       return row.wireSize;
     }
   }
@@ -539,11 +561,12 @@ function resetAll() {
 
   twoWireCurrSelect.value = "30"; 
   twoWireCurrInput.value = "";
+  trafoDirectCheckbox.checked = false;
+  lineSpanSelect.disabled = false;
+  lengthRangeSelect.disabled = false;
   lineSpanSelect.value = "1径間以内";
-  lengthRangeSelect.innerHTML = `
-    <option value="30M以下">30M以下</option>
-    <option value="30M超過">30M超過</option>
-  `;
+  updateLengthRangeOptions(); 
+  lengthRangeSelect.value = "30M以下";
 
   lengthInput.value = "";
 
