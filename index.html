@@ -1,117 +1,124 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>電線許容電流 判定システム</title>
-<style>
-  /* ------------ 全体レイアウト・レスポンシブ対応 ------------ */
-  body {
-    font-family: sans-serif;
-    margin: 0; padding: 0;
-    background: #f5f5f5;
-  }
-  header {
-    background: #333;
-    color: #fff;
-    padding: 0.5em;
-    text-align: center;
-  }
-  main {
-    padding: 1em;
-    max-width: 600px;
-    margin: 0 auto;
-    background: #fff;
-    border-radius: 8px;
-  }
-  h1 {
-    font-size: 1.2em;
-    margin: 0.4em 0;
-  }
-  label {
-    display: inline-block;
-    margin-right: 0.5em;
-  }
-  select, input[type="number"], input[type="range"], input[type="text"] {
-    width: 100%;
-    box-sizing: border-box;
-    margin-bottom: 1em;
-    padding: 0.4em;
-    font-size: 1em;
-  }
-  .hidden {
-    display: none;
-  }
-  .btn {
-    display: inline-block;
-    background: #007bff;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    padding: 0.6em 1.2em;
-    font-size: 1em;
-    cursor: pointer;
-  }
-  .btn:hover {
-    background: #0056b3;
-  }
-  .result {
-    margin-top: 1em;
-    padding: 1em;
-    background: #eef;
-    border-radius: 4px;
-  }
-  hr {
-    margin: 1.5em 0;
-  }
-  footer {
-    text-align: center;
-    font-size: 0.8em;
-    color: #666;
-    margin: 1em 0;
-  }
-</style>
+  <meta charset="utf-8">
+  <!-- スマホ対応：ビューポート設定 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>電線判定</title>
+  <style>
+    /* ===== 全体レイアウト ===== */
+    body {
+      margin: 0; padding: 0;
+      font-family: sans-serif;
+      background: #f5f5f5;
+    }
+    /* 上部バー（リセットボタン含む） */
+    header {
+      position: relative;
+      background: #333;
+      height: 40px;
+    }
+    /* 右上にリセットボタン */
+    .resetBtn {
+      position: absolute;
+      right: 10px;
+      top: 5px;
+      background: #6c757d;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 0.3em 0.8em;
+      font-size: 0.9em;
+      cursor: pointer;
+    }
+    .resetBtn:hover {
+      background: #5a6268;
+    }
+
+    /* メインコンテンツ */
+    main {
+      padding: 1em;
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 8px;
+    }
+    label {
+      display: inline-block;
+      margin-bottom: 0.3em;
+    }
+    select, input[type="number"], input[type="range"], input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 1em;
+      padding: 0.4em;
+      font-size: 1em;
+    }
+    .hidden { display: none; }
+
+    /* 判定ボタン：横長 & 中央揃え */
+    .btnArea {
+      text-align: center;
+      margin: 1.5em 0;
+    }
+    .btnJudge {
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 0.8em 2em;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    .btnJudge:hover {
+      background: #0056b3;
+    }
+
+    /* 結果表示 */
+    .result {
+      margin-top: 1em;
+      padding: 1em;
+      background: #eef;
+      border-radius: 4px;
+      white-space: pre-line; /* 改行をそのまま表示 */
+    }
+  </style>
 </head>
 <body>
 
 <header>
-  <h1>電線許容電流 判定システム</h1>
+  <!-- リセットボタン（右上） -->
+  <button class="resetBtn" id="resetBtn">リセット</button>
 </header>
 
 <main>
 
-  <!-- 相線の選択 -->
+  <!-- ▼ 相線 選択肢 ▼ -->
   <label for="phase">相線を選択：</label>
   <select id="phase">
-    <option value="単三">単三</option>
+    <option value="単三" selected>単三</option>
     <option value="三相">三相</option>
     <option value="単二100V">単二100V</option>
   </select>
 
-  <!-- ▼▼▼ [A] 単三 用 UI ▼▼▼ -->
+  <!-- ▼▼▼ 単三 用 UI ▼▼▼ -->
   <div id="single-three-wire-section">
-    <!-- 深夜負荷の配線状態 (単三のみ) -->
-    <div id="night-load-section">
-      <label for="nightLoad">深夜負荷配線状態：</label>
-      <select id="nightLoad">
-        <option value="なし">なし</option>
-        <option value="一次側">一次側</option>
-        <option value="二次側">二次側</option>
-      </select>
-    </div>
+    <!-- 深夜負荷の配線状態 -->
+    <label for="nightLoad">深夜負荷配線状態：</label>
+    <select id="nightLoad">
+      <option value="なし" selected>なし</option>
+      <option value="一次側">一次側</option>
+      <option value="二次側">二次側</option>
+    </select>
 
-    <!-- 契約形態 (単三のみ) -->
-    <div id="contract-section">
-      <label for="contractType">契約形態：</label>
-      <select id="contractType">
-        <option value="ACL">ACL</option>
-        <option value="主開閉器">主開閉器</option>
-      </select>
-    </div>
+    <!-- 契約形態 -->
+    <label for="contractType">契約形態：</label>
+    <select id="contractType">
+      <option value="ACL">ACL</option>
+      <option value="主開閉器" selected>主開閉器</option>
+    </select>
 
-    <hr>
-
-    <!-- ACL電流値（単三 & ACL時だけ表示）-->
+    <!-- ACL電流値 (単三 & ACL時) -->
     <div id="acl-section" class="hidden">
       <label for="aclValue">ACL電流値[A]：</label>
       <select id="aclValue">
@@ -125,13 +132,17 @@
       </select>
     </div>
 
-    <!-- 主開閉器容量（単三 & 主開閉器時だけ表示） -->
+    <!-- 主開閉器容量 (単三 & 主開閉器時) -->
     <div id="mainCB-section" class="hidden">
-      <label for="mainCB">主開閉器容量[kVA]：</label>
+      <label for="mainCB">主開閉器容量[kVA]<br>
+        <span style="font-size:0.8em;color:#666;">
+          ※ELB50Aの場合10kVA
+        </span>
+      </label>
       <input id="mainCB" type="number" step="0.1" min="0" placeholder="例：5.0">
     </div>
 
-    <!-- 深夜負荷容量（単三 & 深夜負荷一次側時に入力必要）-->
+    <!-- 深夜負荷容量 (単三 & 深夜負荷=一次側) -->
     <div id="nightLoadCap-section" class="hidden">
       <label for="nightLoadCap">深夜負荷容量[kVA]：</label>
       <input id="nightLoadCap" type="number" step="0.1" min="0" placeholder="例：2.0">
@@ -139,79 +150,68 @@
   </div>
   <!-- ▲▲▲ 単三 用 UI 終了 ▲▲▲ -->
 
-  <!-- ▼▼▼ [B] 三相 用 UI ▼▼▼ -->
+  <!-- ▼▼▼ 三相 用 UI ▼▼▼ -->
   <div id="three-phase-section" class="hidden">
-    <hr>
     <label for="threePhaseKW">負荷容量[kW]：</label>
     <input id="threePhaseKW" type="number" step="0.1" min="0" placeholder="例：10.0">
 
-    <label>力率[%]：<span id="pf-label">85</span>%</label>
+    <label>
+      力率[%]<br>
+      <span style="font-size:0.8em;color:#666;">
+        不明な場合は85%で算定
+      </span>
+    </label>
     <input id="powerFactor" type="range" min="0" max="100" step="1" value="85">
   </div>
   <!-- ▲▲▲ 三相 用 UI 終了 ▲▲▲ -->
 
-  <!-- ▼▼▼ [C] 単二100V 用 UI ▼▼▼ -->
+  <!-- ▼▼▼ 単二100V 用 UI ▼▼▼ -->
   <div id="two-wire-100v-section" class="hidden">
-    <hr>
-    <!-- 1. 電流値またはACL電流値(A) -->
-    <div>
-      <label for="twoWireCurrSelect">電流値(A) - 選択：</label>
-      <select id="twoWireCurrSelect">
-        <option value="5">5A</option>
-        <option value="10">10A</option>
-        <option value="15">15A</option>
-        <option value="20">20A</option>
-        <option value="30">30A</option>
-      </select>
-    </div>
-    <div>
-      <label for="twoWireCurrInput">電流値(A) - 自由入力：</label>
-      <input id="twoWireCurrInput" type="number" step="1" min="0" placeholder="自由入力">
-    </div>
+    <!-- 1. 電流値(A) 選択＋自由入力 -->
+    <label for="twoWireCurrSelect">電流値(A) - 選択：</label>
+    <select id="twoWireCurrSelect">
+      <option value="5">5A</option>
+      <option value="10">10A</option>
+      <option value="15">15A</option>
+      <option value="20">20A</option>
+      <option value="30" selected>30A</option>
+    </select>
 
-    <!-- 2. 変圧器から引込柱の低圧線径間数 -->
-    <label for="lineSpanSelect">線径間数：</label>
+    <label for="twoWireCurrInput">電流値(A) - 自由入力：</label>
+    <input id="twoWireCurrInput" type="number" step="1" min="0" placeholder="自由入力">
+
+    <!-- 2. 線径間数 -->
+    <label for="lineSpanSelect">変圧器から引込柱までの低圧線径間数：</label>
     <select id="lineSpanSelect">
-      <option value="1径間以内">1径間以内</option>
+      <option value="1径間以内" selected>1径間以内</option>
       <option value="1径間超過">1径間超過</option>
     </select>
 
-    <!-- 3. 引込線亘長 (選択肢は線径間数で分岐) -->
-    <div>
-      <label for="lengthRangeSelect">引込線亘長：</label>
-      <select id="lengthRangeSelect">
-        <!-- デフォルトは 1径間以内 が選択された状態に合わせ、 [30M以下 / 30M超過] を初期表示 -->
-        <option value="30M以下">30M以下</option>
-        <option value="30M超過">30M超過</option>
-      </select>
-    </div>
+    <!-- 3. 引込線亘長区分 -->
+    <label for="lengthRangeSelect">引込線亘長：</label>
+    <select id="lengthRangeSelect">
+      <!-- 初期：1径間以内→[30M以下, 30M超過] -->
+      <option value="30M以下">30M以下</option>
+      <option value="30M超過">30M超過</option>
+    </select>
   </div>
   <!-- ▲▲▲ 単二100V 用 UI 終了 ▲▲▲ -->
 
-  <hr>
-
-  <!-- 亘長 (既存システム) -->
-  <!--
-    ※ 単二100Vでは別の「引込線亘長」選択肢を使うため、
-       ここ（lengthInput）は 単三/三相用のみ活かす想定
-  -->
+  <!-- ▼ 既存 亘長(1～60m) 入力 (単三/三相用) ▼ -->
   <div id="wireLength-section">
-    <label for="length">電線亘長[m] (1～60)：</label>
-    <input id="length" type="number" step="1" min="1" max="60" placeholder="1 ～ 60の範囲" />
+    <label for="length">電線亘長[m]：</label>
+    <input id="length" type="number" step="1" min="1" max="60" placeholder="1 ～ 60">
   </div>
 
-  <button class="btn" id="calcBtn">判定</button>
-
-  <!-- 結果表示 -->
-  <div class="result" id="resultArea" style="display: none;">
-    <p id="calcResult"></p>
+  <!-- 判定ボタン（中央揃え＆ワイド） -->
+  <div class="btnArea">
+    <button class="btnJudge" id="calcBtn">判定</button>
   </div>
+
+  <!-- 結果表示エリア -->
+  <div class="result" id="resultArea" style="display: none;"></div>
 
 </main>
-
-<footer>
-  <p>© 2023 電線許容電流 判定システム</p>
-</footer>
 
 <script>
 /* ------------------------------------------------------------
@@ -243,7 +243,7 @@ const wireData = {
 
 /* ------------------------------------------------------------
    B. 単二100V用のデータ表
-      （「変圧器から引込柱の低圧線径間数」「引込線亘長」別・許容限度(A)）
+      （「線径間数」「引込線亘長区分」別・許容限度(A)）
    ------------------------------------------------------------ */
 const table2w100V = [
   // 1径間以内 / 30M以下
@@ -253,14 +253,12 @@ const table2w100V = [
   { wireSize: "14SQ",  lineSpan: "1径間以内", currentLimit: 75, lengthRange: "30M以下" },
   { wireSize: "22SQ",  lineSpan: "1径間以内", currentLimit:120, lengthRange: "30M以下" },
   { wireSize: "38SQ",  lineSpan: "1径間以内", currentLimit:220, lengthRange: "30M以下" },
-
   // 1径間以内 / 30M超過
   { wireSize: "2.6mm", lineSpan: "1径間以内", currentLimit: 20, lengthRange: "30M超過" },
   { wireSize: "3.2mm", lineSpan: "1径間以内", currentLimit: 30, lengthRange: "30M超過" },
   { wireSize: "14SQ",  lineSpan: "1径間以内", currentLimit: 50, lengthRange: "30M超過" },
   { wireSize: "22SQ",  lineSpan: "1径間以内", currentLimit: 80, lengthRange: "30M超過" },
   { wireSize: "38SQ",  lineSpan: "1径間以内", currentLimit:150, lengthRange: "30M超過" },
-
   // 1径間超過 / 15M以下
   { wireSize: "2.0mm", lineSpan: "1径間超過", currentLimit: 20, lengthRange: "15M以下" },
   { wireSize: "2.6mm", lineSpan: "1径間超過", currentLimit: 30, lengthRange: "15M以下" },
@@ -268,7 +266,6 @@ const table2w100V = [
   { wireSize: "14SQ",  lineSpan: "1径間超過", currentLimit: 75, lengthRange: "15M以下" },
   { wireSize: "22SQ",  lineSpan: "1径間超過", currentLimit: 80, lengthRange: "15M以下" },
   { wireSize: "38SQ",  lineSpan: "1径間超過", currentLimit:150, lengthRange: "15M以下" },
-
   // 1径間超過 / 15M超過30M以下
   { wireSize: "2.0mm", lineSpan: "1径間超過", currentLimit: 10, lengthRange: "15M超過30M以下" },
   { wireSize: "2.6mm", lineSpan: "1径間超過", currentLimit: 20, lengthRange: "15M超過30M以下" },
@@ -276,7 +273,6 @@ const table2w100V = [
   { wireSize: "14SQ",  lineSpan: "1径間超過", currentLimit: 50, lengthRange: "15M超過30M以下" },
   { wireSize: "22SQ",  lineSpan: "1径間超過", currentLimit: 80, lengthRange: "15M超過30M以下" },
   { wireSize: "38SQ",  lineSpan: "1径間超過", currentLimit:150, lengthRange: "15M超過30M以下" },
-
   // 1径間超過 / 30M超過
   { wireSize: "2.6mm", lineSpan: "1径間超過", currentLimit: 10, lengthRange: "30M超過" },
   { wireSize: "3.2mm", lineSpan: "1径間超過", currentLimit: 20, lengthRange: "30M超過" },
@@ -286,94 +282,83 @@ const table2w100V = [
 ];
 
 /* ------------------------------------------------------------
-   C. DOM要素の参照
+   C. 各種DOM参照
    ------------------------------------------------------------ */
-/* --- 共通 --- */
-const phase = document.getElementById("phase");
-const calcBtn = document.getElementById("calcBtn");
-const resultArea = document.getElementById("resultArea");
-const calcResult = document.getElementById("calcResult");
+const phase                = document.getElementById("phase");
+const singleThreeWireSec   = document.getElementById("single-three-wire-section");
+const nightLoad            = document.getElementById("nightLoad");
+const contractType         = document.getElementById("contractType");
+const aclSection           = document.getElementById("acl-section");
+const aclValue             = document.getElementById("aclValue");
+const mainCBSection        = document.getElementById("mainCB-section");
+const mainCB               = document.getElementById("mainCB");
+const nightLoadCapSection  = document.getElementById("nightLoadCap-section");
+const nightLoadCap         = document.getElementById("nightLoadCap");
 
-/* --- 単三用要素 --- */
-const singleThreeWireSection = document.getElementById("single-three-wire-section");
-const nightLoad  = document.getElementById("nightLoad");
-const contract   = document.getElementById("contractType");
-const aclSection = document.getElementById("acl-section");
-const mainCBSection = document.getElementById("mainCB-section");
-const nightLoadCapSection = document.getElementById("nightLoadCap-section");
+const threePhaseSection    = document.getElementById("three-phase-section");
+const threePhaseKW         = document.getElementById("threePhaseKW");
+const powerFactor          = document.getElementById("powerFactor");
 
-const aclValue     = document.getElementById("aclValue");
-const mainCB       = document.getElementById("mainCB");
-const nightLoadCap = document.getElementById("nightLoadCap");
+const twoWireSec           = document.getElementById("two-wire-100v-section");
+const twoWireCurrSelect    = document.getElementById("twoWireCurrSelect");
+const twoWireCurrInput     = document.getElementById("twoWireCurrInput");
+const lineSpanSelect       = document.getElementById("lineSpanSelect");
+const lengthRangeSelect    = document.getElementById("lengthRangeSelect");
 
-/* --- 三相用要素 --- */
-const threePhaseSection  = document.getElementById("three-phase-section");
-const threePhaseKW = document.getElementById("threePhaseKW");
-const powerFactor  = document.getElementById("powerFactor");
-const pfLabel      = document.getElementById("pf-label");
+const wireLengthSection    = document.getElementById("wireLength-section");
+const lengthInput          = document.getElementById("length");
 
-/* --- 単二100V用要素 --- */
-const twoWireSection = document.getElementById("two-wire-100v-section");
-const twoWireCurrSelect = document.getElementById("twoWireCurrSelect");
-const twoWireCurrInput  = document.getElementById("twoWireCurrInput");
-const lineSpanSelect    = document.getElementById("lineSpanSelect");
-const lengthRangeSelect = document.getElementById("lengthRangeSelect");
-
-/* --- 既存システムの亘長(1～60m) --- */
-const wireLengthSection = document.getElementById("wireLength-section");
-const lengthInput  = document.getElementById("length");
+const calcBtn      = document.getElementById("calcBtn");
+const resetBtn     = document.getElementById("resetBtn");
+const resultArea   = document.getElementById("resultArea");
 
 /* ------------------------------------------------------------
-   D. イベント設定
+   D. 画面表示の更新 (相線等の選択に応じてフォームを切り替え)
    ------------------------------------------------------------ */
-// 力率のスライダー変更時
-powerFactor.addEventListener("input", () => {
-  pfLabel.textContent = powerFactor.value;
-});
-
-// 相線や契約形態の変更時に、表示フォームを動的に切り替え
 function updateFormVisibility() {
-  // 初期に全部隠す
-  singleThreeWireSection.classList.add("hidden");
+  // 一旦 全部 非表示
+  singleThreeWireSec.classList.add("hidden");
   threePhaseSection.classList.add("hidden");
-  twoWireSection.classList.add("hidden");
+  twoWireSec.classList.add("hidden");
   wireLengthSection.classList.add("hidden");
 
-  // 単三向けUIを非表示にするかどうか
+  // 単三
   if (phase.value === "単三") {
-    singleThreeWireSection.classList.remove("hidden");
+    singleThreeWireSec.classList.remove("hidden");
     wireLengthSection.classList.remove("hidden");
 
-    // ACL or 主開閉器
-    if (contract.value === "ACL") {
+    if (contractType.value === "ACL") {
       aclSection.classList.remove("hidden");
       mainCBSection.classList.add("hidden");
     } else {
       aclSection.classList.add("hidden");
       mainCBSection.classList.remove("hidden");
     }
-    // 深夜負荷配線状態
+    // 深夜負荷
     if (nightLoad.value === "一次側") {
       nightLoadCapSection.classList.remove("hidden");
     } else {
       nightLoadCapSection.classList.add("hidden");
     }
-
-  } else if (phase.value === "三相") {
+  }
+  // 三相
+  else if (phase.value === "三相") {
     threePhaseSection.classList.remove("hidden");
     wireLengthSection.classList.remove("hidden");
-
-  } else if (phase.value === "単二100V") {
-    // 単二100V UI表示
-    twoWireSection.classList.remove("hidden");
+  }
+  // 単二100V
+  else if (phase.value === "単二100V") {
+    twoWireSec.classList.remove("hidden");
   }
 }
+
+// イベントリスナー
 phase.addEventListener("change", updateFormVisibility);
-contract.addEventListener("change", updateFormVisibility);
 nightLoad.addEventListener("change", updateFormVisibility);
+contractType.addEventListener("change", updateFormVisibility);
+
+// 単二100V: 線径間数が変化したら、亘長区分を更新
 lineSpanSelect.addEventListener("change", () => {
-  // 「1径間以内」なら => lengthRangeSelectを [30M以下, 30M超過]
-  // 「1径間超過」なら => lengthRangeSelectを [15M以下, 15M超過30M以下, 30M超過]
   if (lineSpanSelect.value === "1径間以内") {
     lengthRangeSelect.innerHTML = `
       <option value="30M以下">30M以下</option>
@@ -388,45 +373,44 @@ lineSpanSelect.addEventListener("change", () => {
   }
 });
 
-/* 初期状態を反映 */
+// 初期表示
 updateFormVisibility();
 
 /* ------------------------------------------------------------
-   E. 三相/単三 用の電流値計算 (公式A～E)
+   E. 三相/単三 の電流値計算 (公式A～E)
    ------------------------------------------------------------ */
-function calculateCurrentForThreePhaseOrSingle() {
+function calcCurrentFor3phaseOrSingle() {
   let current = 0;
 
   if (phase.value === "三相") {
-    // 公式E
-    // 電流[A] = (負荷容量[kW] * 1000) / (1.73 * 200 * (力率[%]*0.01))
-    const kw  = parseFloat(threePhaseKW.value) || 0;
-    const pf  = parseFloat(powerFactor.value) * 0.01;
+    const kw = parseFloat(threePhaseKW.value) || 0;
+    const pf = parseFloat(powerFactor.value) / 100; // 0～1
     if (pf === 0) return 0;
+    // 公式E
     current = (kw * 1000) / (1.73 * 200 * pf);
   } else {
     // 単三 (公式A～D)
-    const nl = nightLoad.value;      // 深夜負荷
-    const ct = contract.value;       // 契約形態
+    const nl = nightLoad.value;
+    const ct = contractType.value;
     const acl = parseFloat(aclValue.value) || 0;
     const mCB = parseFloat(mainCB.value) || 0;
     const nlCap = parseFloat(nightLoadCap.value) || 0;
 
     if (nl === "なし" || nl === "二次側") {
       if (ct === "ACL") {
-        // 公式A: current = ACL * 0.6
+        // 公式A
         current = acl * 0.6;
       } else {
-        // 公式B: current = 主開閉器容量[kVA] * 5
+        // 公式B
         current = mCB * 5;
       }
     } else {
-      // 深夜負荷 = 一次側
+      // 一次側
       if (ct === "ACL") {
-        // 公式C: current = (ACL*0.6) + (深夜負荷*5)
+        // 公式C
         current = (acl * 0.6) + (nlCap * 5);
       } else {
-        // 公式D: current = (主開閉器容量*5) + (深夜負荷*5)
+        // 公式D
         current = (mCB * 5) + (nlCap * 5);
       }
     }
@@ -435,19 +419,16 @@ function calculateCurrentForThreePhaseOrSingle() {
 }
 
 /* ------------------------------------------------------------
-   F. 三相/単三 用の電線選定 (既存 wireData)
+   F. 三相/単三 用の電線選定
    ------------------------------------------------------------ */
 function findSuitableWire(requiredA, lengthM) {
-  // lengthM は1～60の想定
   if (lengthM < 1 || lengthM > 60) return null;
-
-  // wireDataの各サイズを小さい順に見て、許容電流 >= requiredA となる最初のサイズを返す
-  const sizes = Object.keys(wireData).map(Number).sort((a, b) => a - b);
+  const sizes = Object.keys(wireData).map(Number).sort((a,b)=>a-b);
   for (let i=0; i<sizes.length; i++) {
-    let sizeKey = sizes[i].toString();
-    let allowableA = wireData[sizeKey][lengthM - 1]; // 0-index
+    const sizeKey = sizes[i].toString();
+    const allowableA = wireData[sizeKey][lengthM - 1];
     if (allowableA >= requiredA) {
-      return sizeKey;
+      return sizeKey; // "2.6", "3.2", "14", etc.
     }
   }
   return null;
@@ -456,14 +437,14 @@ function findSuitableWire(requiredA, lengthM) {
 /* ------------------------------------------------------------
    G. 単二100V 用の電線選定ロジック
    ------------------------------------------------------------ */
-function findWireForTwoWire100V(requestedA, lineSpan, lengthRange) {
-  // 1) 対象となる行だけ抽出
-  const subset = table2w100V.filter(row =>
-    row.lineSpan === lineSpan && row.lengthRange === lengthRange
+function findWireForTwoWire100V(requestedA, lineSpan, lenRange) {
+  // 対象行を抽出
+  const subset = table2w100V.filter(row => 
+    row.lineSpan === lineSpan && row.lengthRange === lenRange
   );
   if (subset.length === 0) return null;
 
-  // 2) wireSizeごとの優先順位付け（最小サイズ → 大サイズ）
+  // ワイヤサイズ順序づけ
   const wireOrder = {
     "2.0mm": 1,
     "2.6mm": 2,
@@ -472,13 +453,15 @@ function findWireForTwoWire100V(requestedA, lineSpan, lengthRange) {
     "22SQ": 5,
     "38SQ": 6
   };
+  subset.sort((a,b)=> (wireOrder[a.wireSize]||999) - (wireOrder[b.wireSize]||999));
 
-  // 3) wireOrder に基づいて小さい順にソート
-  subset.sort((a, b) => (wireOrder[a.wireSize] || 999) - (wireOrder[b.wireSize] || 999));
-
-  // 4) currentLimit >= requestedA を満たす最初のサイズを返す
+  // currentLimit >= requestedA の最初のサイズ
   for (const row of subset) {
     if (row.currentLimit >= requestedA) {
+      // もし "2.0mm" なら "2.0(2.6mm)" と表示したい
+      if (row.wireSize === "2.0mm") {
+        return "2.0(2.6mm)";
+      } 
       return row.wireSize;
     }
   }
@@ -486,59 +469,90 @@ function findWireForTwoWire100V(requestedA, lineSpan, lengthRange) {
 }
 
 /* ------------------------------------------------------------
-   H. 「判定ボタン」クリック時のメイン処理
+   H. 判定ボタン
    ------------------------------------------------------------ */
 calcBtn.addEventListener("click", () => {
   let msg = "";
-  resultArea.style.display = "block";
 
-  if (phase.value === "三相" || phase.value === "単三") {
-    // ▼ 三相 or 単三の場合 (既存ロジック) ▼
-    const requiredA = calculateCurrentForThreePhaseOrSingle();
-
-    // 入力されている亘長(1～60)を取得
+  // 相線で分岐
+  if (phase.value === "単三" || phase.value === "三相") {
+    // A) 単三 or 三相
+    const requiredA = calcCurrentFor3phaseOrSingle();
     const dist = parseInt(lengthInput.value, 10);
-    if (!dist || dist < 1 || dist > 60) {
-      alert("亘長(1～60m)を正しく入力してください。");
+
+    if (!dist || dist<1 || dist>60) {
+      alert("亘長(1～60)を入力してください。");
       return;
     }
-
-    msg += `計算された電流値: <strong>${requiredA.toFixed(1)}A</strong><br>`;
-    // 電線選定
     const wireSize = findSuitableWire(requiredA, dist);
-    if (wireSize) {
-      msg += `亘長 ${dist}m の場合、<strong>${wireSize}sq</strong> 電線が最小で条件を満たします。`;
+
+    if (!wireSize) {
+      msg = "条件を満たす電線が見つかりませんでした。";
     } else {
-      msg += `<span style="color:red;">条件を満たす電線が見つかりませんでした。</span>`;
+      // 結果表示例： 
+      // 結果：14SQ
+      // 電流値： 23.4A
+      // 亘長： 30m
+      msg = `結果：${wireSize}SQ\n`;
+      msg += `電流値：${requiredA.toFixed(1)}A\n`;
+      msg += `亘長：${dist}m\n`;
     }
 
   } else {
-    // ▼ 単二100Vの場合 ▼
-    // 1) 入力された電流値[A]を確定
-    const selVal = parseFloat(twoWireCurrSelect.value) || 0;
+    // B) 単二100V
+    const selVal  = parseFloat(twoWireCurrSelect.value) || 0;
     const freeVal = parseFloat(twoWireCurrInput.value) || 0;
-    // 「選択式」と「自由入力」で大きい方を採用する or どちらか優先？
-    // → ここでは「自由入力があればそれを優先」, 無入力なら選択値を使う、とします
-    let requestedA = freeVal > 0 ? freeVal : selVal;
+    // 自由入力があれば優先、なければ選択値
+    const requestedA = freeVal > 0 ? freeVal : selVal;
 
-    // 2) 線径間数・亘長区分を取得
-    const lineSpan = lineSpanSelect.value;         // 1径間以内 or 1径間超過
-    const lenRange = lengthRangeSelect.value;      // [30M以下, 30M超過] / [15M以下, 15M超過30M以下, 30M超過]
+    const lineSpan  = lineSpanSelect.value;
+    const lenRange  = lengthRangeSelect.value;
 
-    msg += `契約電流(推定): <strong>${requestedA}A</strong><br>`;
-    msg += `線径間数: ${lineSpan}, 亘長: ${lenRange}<br>`;
-
-    // 3) 電線選定
     const wireSize = findWireForTwoWire100V(requestedA, lineSpan, lenRange);
-    if (wireSize) {
-      msg += `⇒ 最小の電線サイズは <strong>${wireSize}</strong> です。`;
+    if (!wireSize) {
+      msg = "条件を満たす電線が見つかりませんでした。";
     } else {
-      msg += `<span style="color:red;">条件を満たす電線サイズが見つかりませんでした。</span>`;
+      msg = `結果：${wireSize}\n`;
+      msg += `電流値：${requestedA}A\n`;
+      msg += `線径間数：${lineSpan}, 亘長区分：${lenRange}\n`;
     }
   }
 
-  calcResult.innerHTML = msg;
+  resultArea.textContent = msg;
+  resultArea.style.display = "block";
 });
+
+/* ------------------------------------------------------------
+   I. リセットボタン (全項目を初期状態に戻す)
+   ------------------------------------------------------------ */
+function resetAll() {
+  // 相線など初期に戻す
+  phase.value = "単三";
+  nightLoad.value = "なし";
+  contractType.value = "主開閉器";
+  aclValue.value = "10";
+  mainCB.value = "";
+  nightLoadCap.value = "";
+
+  threePhaseKW.value = "";
+  powerFactor.value = "85";
+
+  twoWireCurrSelect.value = "30"; 
+  twoWireCurrInput.value = "";
+  lineSpanSelect.value = "1径間以内";
+  lengthRangeSelect.innerHTML = `
+    <option value="30M以下">30M以下</option>
+    <option value="30M超過">30M超過</option>
+  `;
+
+  lengthInput.value = "";
+
+  resultArea.style.display = "none";
+  resultArea.textContent = "";
+  updateFormVisibility();
+}
+
+resetBtn.addEventListener("click", resetAll);
 </script>
 
 </body>
